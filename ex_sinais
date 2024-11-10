@@ -1,0 +1,29 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <signal.h>
+
+void handler(int signum) {
+    printf("Thread %ld received signal %d\n", pthread_self(), signum);
+}
+
+void *worker(void *arg) {
+    signal(SIGUSR1, handler);
+    printf("Thread %d is waiting for a signal.\n", *(int *)arg);
+    pause();
+    return NULL;
+}
+
+int main() {
+    pthread_t thread;
+    int id = 1;
+
+    pthread_create(&thread, NULL, worker, &id);
+    sleep(1);
+
+    pthread_kill(thread, SIGUSR1);
+
+    pthread_join(thread, NULL);
+
+    return 0;
+}
