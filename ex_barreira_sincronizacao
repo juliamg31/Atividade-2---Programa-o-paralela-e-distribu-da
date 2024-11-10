@@ -1,0 +1,34 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+
+pthread_barrier_t barrier;
+
+void *worker(void *arg) {
+    printf("Thread %d is performing work before the barrier.\n", *(int *)arg);
+    sleep(1); // Simula trabalho
+
+    pthread_barrier_wait(&barrier);
+
+    printf("Thread %d has passed the barrier.\n", *(int *)arg);
+    sleep(1); // Simula trabalho adicional
+
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[4];
+    int ids[4] = {1, 2, 3, 4};
+
+    pthread_barrier_init(&barrier, NULL, 4);
+
+    for (int i = 0; i < 4; i++)
+        pthread_create(&threads[i], NULL, worker, &ids[i]);
+
+    for (int i = 0; i < 4; i++)
+        pthread_join(threads[i], NULL);
+
+    pthread_barrier_destroy(&barrier);
+
+    return 0;
+}
