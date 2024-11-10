@@ -1,0 +1,54 @@
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+
+pthread_mutex_t resource = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t readCountMutex = PTHREAD_MUTEX_INITIALIZER;
+int readCount = 0;
+
+void *reader(void *arg) {
+    pthread_mutex_lock(&readCountMutex);
+    readCount++;
+    if (readCount == 1)
+        pthread_mutex_lock(&resource);
+    pthread_mutex_unlock(&readCountMutex);
+
+    printf("Reader %d is reading the resource.\n", *(int *)arg);
+    sleep(1); // Simula leitura
+
+    pthread_mutex_lock(&readCountMutex);
+    readCount--;
+    if (readCount == 0)
+        pthread_mutex_unlock(&resource);
+    pthread_mutex_unlock(&readCountMutex);
+
+    return NULL;
+}
+
+void *writer(void *arg) {
+    pthread_mutex_lock(&resource);
+
+    printf("Writer %d is writing to the resource.\n", *(int *)arg);
+    sleep(1); // Simula escrita
+
+    pthread_mutex_unlock(&resource);
+
+    return NULL;
+}
+
+int main() {
+    pthread_t readers[5], writers[3];
+    int ids[5] = {1, 2, 3, 4, 5};
+
+    for (int i = 0; i < 5; i++)
+        pthread_create(&readers[i], NULL, reader, &ids[i]);
+    for (int i = 0; i < 3; i++)
+        pthread_create(&writers[i], NULL, writer, &ids[i]);
+
+    for (int i = 0; i < 5; i++)
+        pthread_join(readers[i], NULL);
+    for (int i = 0; i < 3; i++)
+        pthread_join(writers[i], NULL);
+
+    return 0;
+}
